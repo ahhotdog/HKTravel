@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>愛在空調裡：香港雙人避暑假期提案</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fdfaf6;
+            color: #4a4a4a;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #d4a373;
+            color: #d4a373;
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #faedcd 0%, #fefae0 100%);
+        }
+
+        .scroll-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .interaction-item:hover {
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 pb-20">
+
+    <!-- Chosen Palette: 奶油暖色系 (Warm Neutrals) - 主色: #faedcd (奶油), 點綴: #d4a373 (玫瑰金/木質), 背景: #fdfaf6 (米白) -->
+    <!-- Application Structure Plan: 
+        採用「旅遊儀表板」結構。頂部導覽允許用戶切換「週六行程」、「週日行程」、「專屬愛巢」與「行李清單」。
+        每個區塊針對資訊目標進行設計：
+        1. 儀表板視圖：包含「避暑係數」數據圖表，強調室內旅行的必要性。
+        2. 行程視圖：垂直時間軸，透過 JS 控制內容更新，加入「男友力提醒」與「美食亮點」切換標籤。
+        3. 飯店視圖：強調浴缸與交通優勢。
+        4. 交互清單：讓用戶（女友）可以親自勾選打包清單。
+    -->
+    <!-- Visualization & Content Choices: 
+        1. 室內外溫度/舒適度對比 -> Chart.js (Canvas) 柱狀圖 -> 證明行程的涼爽程度。
+        2. 行程時間軸 -> HTML/CSS 結構 -> 清楚展示流程。
+        3. 交互式切換 -> Vanilla JS -> 在同一頁面切換不同日期的景點細節。
+        4. 情侶互動提示 -> 卡片設計 -> 增加情感連結。
+        Confirming NO SVG/Mermaid used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Header Section -->
+    <header class="gradient-bg pt-10 pb-16 px-6 text-center rounded-b-[3rem] shadow-sm">
+        <h1 class="text-3xl font-bold text-stone-800 mb-2">愛在空調裡 ❄️</h1>
+        <p class="text-stone-600 text-sm tracking-widest uppercase">香港雙人避暑假期提案</p>
+        <div class="mt-4 flex justify-center gap-2">
+            <span class="bg-white/50 px-3 py-1 rounded-full text-xs text-stone-700 border border-stone-200">#全程室內</span>
+            <span class="bg-white/50 px-3 py-1 rounded-full text-xs text-stone-700 border border-stone-200">#地鐵直達</span>
+            <span class="bg-white/50 px-3 py-1 rounded-full text-xs text-stone-700 border border-stone-200">#男友寵溺</span>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 -mt-10">
+        
+        <!-- Navigation Tabs -->
+        <nav class="bg-white rounded-2xl p-2 flex justify-between shadow-lg mb-8 sticky top-4 z-50">
+            <button onclick="switchTab('sat')" id="tab-sat" class="flex-1 py-3 text-sm font-medium transition-all tab-active">6/27 週六</button>
+            <button onclick="switchTab('sun')" id="tab-sun" class="flex-1 py-3 text-sm font-medium transition-all text-stone-400">6/28 週日</button>
+            <button onclick="switchTab('hotel')" id="tab-hotel" class="flex-1 py-3 text-sm font-medium transition-all text-stone-400">飯店/清單</button>
+        </nav>
+
+        <!-- Intro Analysis Section (Dashboard Element) -->
+        <section class="bg-white rounded-3xl p-6 mb-8 card-shadow">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <span class="mr-2">📊</span> 為什麼這份行程最適合妳？
+            </h2>
+            <p class="text-sm text-stone-500 mb-6 leading-relaxed">
+                這份企劃經過精確計算，我們將待在戶外的時間降至最低。下圖顯示了本行程規劃的「室內外舒適度對比」，確保妳每一秒都在冷氣的懷抱中。
+            </p>
+            <div class="chart-container">
+                <canvas id="comfortChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Dynamic Content Area -->
+        <div id="content-sat">
+            <div class="space-y-6">
+                <div class="bg-white rounded-3xl p-6 card-shadow border-l-4 border-[#d4a373]">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-stone-400 uppercase">10:00 - 12:30</span>
+                            <h3 class="text-xl font-bold text-stone-800">大館：古蹟與冷氣美學</h3>
+                        </div>
+                        <span class="text-2xl">🏛️</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">從中環站經半山電梯直達，全程有蓋。在英式紅磚建築內享受現代藝術與冷氣。</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">💑 甜蜜活動</p>
+                            <p class="text-xs">在復古旋轉樓梯幫妳拍出像雜誌般的文青照。</p>
+                        </div>
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">🍴 推薦美食</p>
+                            <p class="text-xs">樂茶軒：清涼中式好茶與造型精緻點心。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 card-shadow border-l-4 border-[#d4a373]">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-stone-400 uppercase">13:00 - 16:00</span>
+                            <h3 class="text-xl font-bold text-stone-800">LOST HK：密室心跳加速(可以更換)</h3>
+                        </div>
+                        <span class="text-2xl">🔒</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">銅鑼灣頂級密室逃脫。在全冷氣室內，考驗兩人的默契與智慧。</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">💑 男友力提醒</p>
+                            <p class="text-xs">遇到難題或燈光昏暗，我會牽緊妳的手解謎。</p>
+                        </div>
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">🍴 推薦美食</p>
+                            <p class="text-xs">何洪記：商場內極鮮美的米其林雲吞麵。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 card-shadow border-l-4 border-[#d4a373]">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-stone-400 uppercase">16:30 - 19:30</span>
+                            <h3 class="text-xl font-bold text-stone-800">置地廣場：奢華晚宴</h3>
+                        </div>
+                        <span class="text-2xl">🥂</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">中環地王商場。晚餐前我們先在華麗的中庭散步，感受摩登香港的優雅。</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">💑 浪漫時刻</p>
+                            <p class="text-xs">盛裝打扮，在奢華噴泉前拍下屬於我們的紀念照。</p>
+                        </div>
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">🍴 推薦美食</p>
+                            <p class="text-xs">Café Landmark：招牌波士頓龍蝦義大利麵。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-sun" class="hidden">
+            <div class="space-y-6">
+                <div class="bg-white rounded-3xl p-6 card-shadow border-l-4 border-[#ccd5ae]">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-stone-400 uppercase">11:00 - 13:30</span>
+                            <h3 class="text-xl font-bold text-stone-800">M+ 博物館：視覺美學</h3>
+                        </div>
+                        <span class="text-2xl">🖼️</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">亞洲首間全球當代文化博物館。空間開闊冷氣充足，館內處處是設計感。</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">💑 甜蜜互動</p>
+                            <p class="text-xs">共用一副耳機，邊聽展覽導覽邊在展廳裡漫步。</p>
+                        </div>
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">🍴 推薦美食</p>
+                            <p class="text-xs">Cupping Room：看著維港海景喝冠軍咖啡。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 card-shadow border-l-4 border-[#ccd5ae]">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-stone-400 uppercase">14:00 - 17:30</span>
+                            <h3 class="text-xl font-bold text-stone-800">K11 MUSEA：藝術商場</h3>
+                        </div>
+                        <span class="text-2xl">✨</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">「購物藝術館」視覺震撼。我們全程經地下冷氣通道進入，免曬太陽。</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">💑 寵溺模式</p>
+                            <p class="text-xs">帶妳去吃正統英式下午茶，妳只要負責當貴婦。</p>
+                        </div>
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">🍴 推薦美食</p>
+                            <p class="text-xs">Fortnum & Mason：皇室御用雙層下午茶。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 card-shadow border-l-4 border-[#ccd5ae]">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-stone-400 uppercase">18:00 - 19:30</span>
+                            <h3 class="text-xl font-bold text-stone-800">天際 100：百萬夜景</h3>
+                        </div>
+                        <span class="text-2xl">🌃</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">全港最高 100 樓全室內觀景台。看著夕陽落下與百萬夜景亮起。</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">💑 浪漫結尾</p>
+                            <p class="text-xs">從背後抱著妳看整片璀璨星河，結束這趟假期。</p>
+                        </div>
+                        <div class="bg-stone-50 p-3 rounded-2xl">
+                            <p class="text-[10px] font-bold text-[#d4a373] uppercase mb-1">🍴 推薦美食</p>
+                            <p class="text-xs">Café 100：品味五星級飯店出品的特調酒。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-hotel" class="hidden space-y-8">
+            <div class="bg-white rounded-3xl p-6 card-shadow overflow-hidden relative">
+                <div class="absolute top-4 right-4 bg-yellow-400 text-[10px] font-bold px-2 py-1 rounded">男友首選</div>
+                <h3 class="text-xl font-bold mb-2">香港灣仔睿景酒店</h3>
+                <p class="text-xs text-stone-400 mb-4">Kew Green Hotel Wanchai</p>
+                <div class="space-y-3">
+                    <div class="flex items-center text-sm text-stone-600">
+                        <span class="w-8">🚇</span>
+                        <span>灣仔站步行 2 分鐘，全程冷氣/遮棚連結。</span>
+                    </div>
+                    <div class="flex items-center text-sm text-stone-600">
+                        <span class="w-8">🛁</span>
+                        <span>**已挑選含浴缸房型**，每晚幫妳放好熱水。</span>
+                    </div>
+                    <div class="flex items-center text-sm text-stone-600">
+                        <span class="w-8">📍</span>
+                        <span>週日退房後寄行李，去九龍玩超順路。</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 card-shadow">
+                <h3 class="text-xl font-bold mb-4">👜 出發前的貼心清單</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 p-3 bg-stone-50 rounded-2xl interaction-item cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 accent-[#d4a373]">
+                        <span class="text-sm">薄外套 (香港室內冷氣很強)</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 bg-stone-50 rounded-2xl interaction-item cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 accent-[#d4a373]">
+                        <span class="text-sm">最上鏡的洋裝 (置地廣場約會穿)</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 bg-stone-50 rounded-2xl interaction-item cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 accent-[#d4a373]">
+                        <span class="text-sm">好走的鞋 (雖然吹冷氣但商場很大)</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 bg-stone-50 rounded-2xl interaction-item cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 accent-[#d4a373]">
+                        <span class="text-sm">期待的心 (我會負責全程照顧妳)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="mt-12 text-center pb-12">
+        <p class="text-stone-300 text-xs">Made with ❤️ for a Cool Hong Kong Trip</p>
+    </footer>
+
+    <script>
+        // Tab Switching Logic
+        function switchTab(tab) {
+            const tabs = ['sat', 'sun', 'hotel'];
+            tabs.forEach(t => {
+                document.getElementById(`content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('tab-active');
+                document.getElementById(`tab-${t}`).classList.add('text-stone-400');
+            });
+
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('text-stone-400');
+        }
+
+        // Chart Initialization
+        window.onload = function() {
+            const ctx = document.getElementById('comfortChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['體感溫度', '汗流浹背度', '心情愉悅度', '冷氣覆蓋率'],
+                    datasets: [
+                        {
+                            label: '一般旅遊 (室外)',
+                            data: [35, 90, 40, 10],
+                            backgroundColor: 'rgba(212, 163, 115, 0.2)',
+                            borderColor: '#d4a373',
+                            borderWidth: 1,
+                            borderRadius: 10
+                        },
+                        {
+                            label: '本次行程 (室內)',
+                            data: [23, 5, 98, 100],
+                            backgroundColor: 'rgba(204, 213, 174, 0.6)',
+                            borderColor: '#ccd5ae',
+                            borderWidth: 1,
+                            borderRadius: 10
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                display: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 20,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: '#4a4a4a',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 12 },
+                            padding: 10
+                        }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
